@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
-import { HiUserCircle, HiLogout, HiIdentification, HiShieldCheck } from 'react-icons/hi';
+import { HiUserCircle, HiLogout, HiIdentification, HiShieldCheck, HiPlus, HiOutlineClipboardList } from 'react-icons/hi';
 import { RiDashboardLine } from 'react-icons/ri';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -115,6 +115,49 @@ export default function DashboardPage() {
                   Tu sesión se mantiene persistente gracias a las cookies de seguridad.
                 </p>
               </div>
+
+              {/* Doctor Specific Actions */}
+              {user.role === 'doctor' && (
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 flex flex-col justify-between"
+                >
+                  <div>
+                    <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold uppercase tracking-wider mb-2">Acciones Médicas</h4>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Nueva Prescripción</p>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
+                      Crea una nueva receta médica para tus pacientes de forma rápida.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/doctor/prescriptions/new')}
+                    className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 dark:shadow-none"
+                  >
+                    <HiPlus size={20} /> Crear ahora
+                  </button>
+                </motion.div>
+              )}
+              {/* Patient Specific Actions */}
+              {user.role === 'patient' && (
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-green-100 dark:border-green-900/30 flex flex-col justify-between"
+                >
+                  <div>
+                    <h4 className="text-green-600 dark:text-green-400 text-sm font-semibold uppercase tracking-wider mb-2">Mis Salud</h4>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Mis Prescripciones</p>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
+                      Revisa tus recetas médicas, márcalas como consumidas o descarga el PDF.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/patient/prescriptions')}
+                    className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100 dark:shadow-none"
+                  >
+                    <HiOutlineClipboardList size={20} /> Ver Bandeja
+                  </button>
+                </motion.div>
+              )}
             </div>
           </div>
         </motion.div>
