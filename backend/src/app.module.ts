@@ -8,8 +8,20 @@ import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
-  imports: [AuthModule, UsersModule, PatientsModule, DoctorsModule, PrescriptionsModule, AdminModule, PrismaModule, HealthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    UsersModule,
+    PatientsModule,
+    DoctorsModule,
+    PrescriptionsModule,
+    AdminModule,
+    PrismaModule,
+    HealthModule,
+  ],
   controllers: [],
   providers: [],
 })

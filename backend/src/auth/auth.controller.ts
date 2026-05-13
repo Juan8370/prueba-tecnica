@@ -1,28 +1,34 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Request, UseGuards, Body } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @Controller('auth')
 export class AuthController {
+  constructor(private authService: AuthService) {}
+
   @Post('register')
-  register() {
-    // TODO: Implement user registration (doctor or patient)
-    return 'Endpoint POST /auth/register OK';
+  async register(@Body() body: any) {
+    return this.authService.register(body);
   }
 
+  @UseGuards(AuthGuard('local'))
   @Post('login')
-  login() {
-    // TODO: Implement user login and return tokens
-    return 'Endpoint POST /auth/login OK';
+  async login(@Request() req: any) {
+    return this.authService.login(req.user);
   }
 
   @Post('refresh')
-  refresh() {
-    // TODO: Implement token refresh logic
-    return 'Endpoint POST /auth/refresh OK';
+  async refresh(@Body() body: { refreshToken: string }) {
+    return this.authService.refresh(body.refreshToken);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile() {
-    // TODO: Return current user profile and role
-    return 'Endpoint GET /auth/profile OK';
+  getProfile(@CurrentUser() user: any) {
+    return user;
   }
 }
