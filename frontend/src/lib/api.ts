@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+// Limpiamos la URL para evitar dobles slashes
+const rawBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const baseURL = rawBaseURL.endsWith('/') ? rawBaseURL.slice(0, -1) : rawBaseURL;
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,8 +28,9 @@ api.interceptors.response.use(
       console.log('[API] Attempting token refresh...');
 
       try {
-        // Pedir un nuevo access token usando el refresh token (que está en cookies HttpOnly)
-        await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
+        // Pedir un nuevo access token usando el refresh token
+        // Usamos una ruta relativa para que axios use la baseURL correctamente sin dobles slashes
+        await axios.post(`${baseURL}/auth/refresh`, {}, { withCredentials: true });
         console.log('[API] Refresh successful, retrying original request...');
         
         // Reintentar la petición original
