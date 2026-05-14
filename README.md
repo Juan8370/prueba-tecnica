@@ -60,12 +60,31 @@ PORT=3001
 
 ### 3. Base de Datos y Seed
 ```bash
-# Ejecutar migraciones
+# Ejecutar migraciones (Local)
 npx prisma migrate dev --name init
+
+# Sincronizar esquema con Producción (ej: Railway)
+# Asegúrate de configurar la DATABASE_URL de producción en tu .env
+npx prisma db push
 
 # Poblar la base de datos con datos de prueba
 npm run seed
 ```
+
+---
+
+## 🌐 Despliegue en Producción (Railway / Vercel)
+
+Para un despliegue exitoso, ten en cuenta:
+
+1.  **Backend (Railway)**:
+    *   Configura la variable `PORT` (Railway la asigna automáticamente).
+    *   Configura `APP_ORIGIN` con la URL de tu frontend (ej: `https://tu-app.vercel.app`). **Sin barra final `/`**.
+    *   Ejecuta `npx prisma db push` desde tu terminal local apuntando a la DB de Railway para crear las tablas.
+
+2.  **Frontend (Vercel)**:
+    *   Configura `NEXT_PUBLIC_API_URL` con la URL de tu backend en Railway.
+
 
 ### 4. Configuración del Frontend
 ```bash
