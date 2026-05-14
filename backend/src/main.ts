@@ -11,34 +11,27 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
   
-  app.use(helmet());
+  // Configuración de Helmet menos restrictiva para evitar bloqueos en CORS
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+  }));
   
-  // Middleware para loguear peticiones
+  // Middleware para loguear peticiones (útil para debug en Railway)
   app.use((req: Request, res: Response, next: NextFunction) => {
-    logger.log(`${req.method} ${req.url}`);
+    logger.log(`${req.method} ${req.url} - Origin: ${req.headers.origin}`);
     next();
   });
 
   app.use(cookieParser());
   
+  // Configuración de CORS dinámica: refleja el origen de la petición
+  // Esto permite que las URLs dinámicas de Vercel funcionen sin cambios de config
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      const envOrigins = process.env.APP_ORIGIN
-        ? process.env.APP_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
-        : [];
-      
-      const allowedOrigins = [...envOrigins, 'http://localhost:3000', 'http://localhost:3002', 'http://localhost:3001'];
-      
-      const sanitizedOrigin = origin ? origin.replace(/\/$/, '') : null;
-      
-      if (!sanitizedOrigin || allowedOrigins.includes(sanitizedOrigin)) {
-        callback(null, true);
-      } else {
-        logger.warn(`CORS blocked for origin: ${origin}`);
-        callback(null, false);
-      }
-    },
+    origin: true, 
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization, Cookie',
   });
 
   app.useGlobalPipes(
@@ -60,7 +53,6 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
 
-  // IMPORTANTE: Railway asigna un puerto dinámico mediante la variable PORT
   const port = process.env.PORT || 3001;
   await app.listen(port);
   logger.log(`Backend running on port ${port}`);
