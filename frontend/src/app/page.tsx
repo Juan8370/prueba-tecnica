@@ -46,9 +46,6 @@ export default function Home() {
           >
             Comenzar ahora
           </button>
-          <button className="px-8 py-4 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl border border-indigo-100 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all">
-            Saber más
-          </button>
         </div>
       </motion.div>
     </main>
