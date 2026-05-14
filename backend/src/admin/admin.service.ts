@@ -64,19 +64,20 @@ export class AdminService {
       take: 5,
     });
 
-    const topDoctors = await Promise.all(
-      topDoctorsRaw.map(async (d) => {
-        const doctor = await this.prisma.doctor.findUnique({
-          where: { id: d.authorId },
-          include: { user: { select: { name: true } } },
-        });
-        return {
-          doctorId: d.authorId,
-          name: doctor?.user.name,
-          count: d._count,
-        };
-      }),
-    );
+    const doctorIds = topDoctorsRaw.map((d) => d.authorId);
+    
+    const doctorsData = await this.prisma.doctor.findMany({
+      where: { id: { in: doctorIds } },
+      include: { user: { select: { name: true } } },
+    });
+
+    const doctorMap = new Map(doctorsData.map(doc => [doc.id, doc.user.name]));
+
+    const topDoctors = topDoctorsRaw.map((d) => ({
+      doctorId: d.authorId,
+      name: doctorMap.get(d.authorId) || 'Desconocido',
+      count: d._count,
+    }));
 
     return {
       totals: {

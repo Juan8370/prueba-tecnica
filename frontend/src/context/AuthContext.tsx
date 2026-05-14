@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
@@ -23,8 +22,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (accessToken: string, refreshToken: string) => Promise<void>;
-  logout: () => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,32 +39,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch profile', error);
-      logout();
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const token = Cookies.get('access_token');
-    if (token) {
-      fetchProfile();
-    } else {
-      setLoading(false);
-    }
+    fetchProfile();
   }, []);
 
-  const login = async (accessToken: string, refreshToken: string) => {
-    Cookies.set('access_token', accessToken, { expires: 1 }); // 1 day
-    Cookies.set('refresh_token', refreshToken, { expires: 7 }); // 7 days
+  const login = async () => {
     await fetchProfile();
   };
 
-  const logout = () => {
-    Cookies.remove('access_token');
-    Cookies.remove('refresh_token');
-    setUser(null);
-    router.push('/login');
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      console.error('Logout error', e);
+    } finally {
+      setUser(null);
+      router.push('/login');
+    }
   };
 
   return (

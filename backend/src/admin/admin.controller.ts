@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { PrescriptionsService } from '../prescriptions/prescriptions.service';
 import { PrescriptionQueryDto } from '../prescriptions/dto/prescription-query.dto';
@@ -55,6 +55,14 @@ export class AdminController {
   getMetrics(@Query('from') from?: string, @Query('to') to?: string) {
     const fromDate = from ? new Date(from) : undefined;
     const toDate = to ? new Date(to) : undefined;
+
+    if (fromDate && isNaN(fromDate.getTime())) {
+      throw new BadRequestException('Formato de fecha inválido en "from"');
+    }
+    if (toDate && isNaN(toDate.getTime())) {
+      throw new BadRequestException('Formato de fecha inválido en "to"');
+    }
+
     return this.adminService.getMetrics(fromDate, toDate);
   }
 }

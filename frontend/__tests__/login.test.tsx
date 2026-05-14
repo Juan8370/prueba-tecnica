@@ -72,7 +72,7 @@ describe('LoginPage', () => {
         email: 'test@test.com',
         password: 'password123',
       });
-      expect(mockLogin).toHaveBeenCalledWith('fake-token', 'fake-refresh-token');
+      expect(mockLogin).toHaveBeenCalledWith();
 
       expect(mockPush).toHaveBeenCalledWith('/dashboard');
     });

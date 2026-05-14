@@ -1,153 +1,124 @@
-# MediAdmin - Sistema de Gestión de Prescripciones Médicas
+# 🩺 MediPrescription - Sistema de Gestión de Prescripciones Médicas
 
-MediAdmin es una solución Full-Stack moderna para la gestión de recetas médicas digitales, implementando separación de roles, panel de administración con métricas, y un sistema seguro y auditable para la emisión y consumo de prescripciones.
-
-## 🚀 Tecnologías Principales
-
-**Backend:**
-* NestJS (Framework)
-* Prisma ORM
-* PostgreSQL
-* JWT (Access & Refresh tokens) + Bcrypt
-* Swagger (OpenAPI)
-* PDFKit & QRCode
-
-**Frontend:**
-* Next.js (App Router)
-* React + TypeScript
-* Tailwind CSS
-* Recharts
-* Framer Motion (Animaciones)
-* Jest & React Testing Library
+Este es un MVP sólido y profesional para la gestión de prescripciones médicas, construido como una aplicación Full-Stack moderna. El sistema permite a los médicos crear recetas, a los pacientes gestionarlas y descargarlas en PDF, y a los administradores visualizar métricas críticas del sistema.
 
 ---
 
-## 🛠️ Requisitos Previos
+## 🚀 Tecnologías Utilizadas
 
-* Node.js (v18 o superior)
-* PostgreSQL instalado y en ejecución
+### Backend
+*   **NestJS**: Framework de Node.js para aplicaciones escalables.
+*   **Prisma ORM**: Modelado de datos y consultas tipo-seguras.
+*   **PostgreSQL**: Base de datos relacional.
+*   **Passport + JWT**: Autenticación segura con **HttpOnly Cookies**.
+*   **PDFKit**: Generación dinámica de prescripciones en PDF.
+*   **Swagger**: Documentación interactiva de la API.
+
+### Frontend
+*   **Next.js 15 (App Router)**: Framework de React para producción.
+*   **TailwindCSS**: Estilizado moderno y responsive.
+*   **Recharts**: Visualización de datos y métricas para el Admin.
+*   **Framer Motion**: Animaciones fluidas para una mejor UX.
+*   **Sonner**: Sistema de notificaciones (Toasts).
 
 ---
 
-## ⚙️ Configuración y Puesta en Marcha
+## 🔒 Seguridad y Arquitectura (Decisiones Técnicas)
 
-Sigue estos pasos para levantar el entorno local en menos de 5 minutos. El proyecto está estructurado como un monorepo usando `npm workspaces`.
+Durante el desarrollo se priorizó la seguridad y la eficiencia:
 
-### 1. Instalación de Dependencias
+1.  **Protección XSS con HttpOnly Cookies**: A diferencia de los sistemas estándar que guardan tokens en LocalStorage, esta app implementa almacenamiento de JWT en cookies con flags `HttpOnly`, `Secure` y `SameSite=Lax`. Esto impide que atacantes accedan a las credenciales mediante scripts maliciosos.
+2.  **Seguridad Global**: Implementación de **Helmet** para cabeceras de seguridad y **Rate Limiting** para prevenir ataques de fuerza bruta y DoS.
+3.  **Optimización de Consultas (N+1)**: Las consultas al ORM (Prisma) se optimizaron para evitar el problema de N+1 peticiones, especialmente en el dashboard de métricas del administrador.
+4.  **RBAC (Role-Based Access Control)**: Sistema robusto de permisos mediante Guards y Decoradores personalizados en el backend, replicado en el frontend mediante protección de rutas por contexto de autenticación.
 
-Ejecuta el siguiente comando en la **raíz del proyecto**:
+---
+
+## 🛠️ Instalación y Configuración
+
+### 1. Clonar el proyecto
 ```bash
-npm install
+git clone <url-del-repo>
+cd prueba-tecnica
 ```
 
-### 2. Variables de Entorno
-
-**Backend:**
-Navega a la carpeta `/backend` y crea un archivo `.env`:
+### 2. Configuración del Backend
 ```bash
 cd backend
-touch .env
+npm install
 ```
-Contenido de `/backend/.env`:
-```env
-DATABASE_URL="postgresql://USUARIO:CONTRASEÑA@localhost:5432/prueba_tecnica?schema=public"
-JWT_ACCESS_SECRET="mi_secreto_super_seguro_access"
-JWT_REFRESH_SECRET="mi_secreto_super_seguro_refresh"
+Crea un archivo `.env` en la carpeta `backend/` con lo siguiente:
+```bash
+DATABASE_URL="postgresql://user:pass@localhost:5432/medidb?schema=public"
+JWT_ACCESS_SECRET="tu_secreto_super_seguro_1"
+JWT_REFRESH_SECRET="tu_secreto_super_seguro_2"
 JWT_ACCESS_TTL="15m"
 JWT_REFRESH_TTL="7d"
-FRONTEND_URL="http://localhost:3002"
+APP_ORIGIN="http://localhost:3000"
 PORT=3001
 ```
-*(Nota: Asegúrate de cambiar USUARIO y CONTRASEÑA por tus credenciales de PostgreSQL)*
 
-**Frontend:**
-Navega a la carpeta `/frontend` y crea un archivo `.env.local`:
+### 3. Base de Datos y Seed
+```bash
+# Ejecutar migraciones
+npx prisma migrate dev --name init
+
+# Poblar la base de datos con datos de prueba
+npm run seed
+```
+
+### 4. Configuración del Frontend
 ```bash
 cd ../frontend
-touch .env.local
+npm install
 ```
-Contenido de `/frontend/.env.local`:
-```env
+Crea un archivo `.env.local` en la carpeta `frontend/` con lo siguiente:
+```bash
 NEXT_PUBLIC_API_URL="http://localhost:3001"
 ```
 
-### 3. Base de Datos: Migraciones y Seed
-
-Desde la raíz del proyecto o desde el directorio `backend`, ejecuta las migraciones para estructurar la base de datos y luego el seed para llenarla de datos de prueba.
-
-```bash
-# Ejecutar migraciones
-npm run prisma migrate dev --workspace=backend
-
-# Ejecutar seed (Semillas)
-npm run prisma db seed --workspace=backend
-```
-
-### 4. Ejecución del Proyecto
-
-Desde la raíz del proyecto, puedes levantar ambos entornos:
-
-```bash
-# Levantar el Backend (Puerto 3001)
-npm run start:dev --workspace=backend
-
-# Levantar el Frontend (Puerto 3002)
-npm run dev --workspace=frontend -- --port 3002
-```
-
 ---
 
-## 🔑 Cuentas de Prueba (Generadas por el Seed)
+## 🏃‍♂️ Ejecución
 
-El sistema genera automáticamente 3 cuentas, una para cada rol:
+**Backend:**
+```bash
+# En /backend
+npm run start:dev
+```
+*API disponible en:* `http://localhost:3001`
+*Swagger Docs:* `http://localhost:3001/docs`
 
-| Rol | Correo Electrónico | Contraseña |
-| :--- | :--- | :--- |
-| **Administrador** | `admin@test.com` | `admin123` |
-| **Médico** | `dr@test.com` | `dr123` |
-| **Paciente** | `patient@test.com` | `patient123` |
+**Frontend:**
+```bash
+# En /frontend
+npm run dev
+```
+*App disponible en:* `http://localhost:3000`
 
 ---
 
 ## 🧪 Testing
 
-Se ha configurado un entorno de pruebas tanto para el Backend como para el Frontend.
+El proyecto cuenta con una cobertura integral:
 
-**Pruebas del Backend (Unitarias de Servicios con Jest):**
-```bash
-npm run test --workspace=backend
-```
-
-**Pruebas del Frontend (Componentes y Hooks con React Testing Library):**
-```bash
-npm run test --workspace=frontend
-```
+*   **Tests Unitarios (Backend):** `npm run test` (Cubre servicios de Auth y Prescripciones).
+*   **Tests E2E (Backend):** `npm run test:e2e` (Simula flujo completo: Registro -> Login -> Crear Receta -> Consumir -> PDF).
+*   **Tests Unitarios (Frontend):** `npm run test` (Verifica componentes y flujo de Login).
 
 ---
 
-## 📚 Documentación de la API (Swagger)
+## 👥 Cuentas de Prueba (Seeds)
 
-Con el servidor backend en ejecución, puedes acceder a la documentación interactiva de la API, probar los endpoints, visualizar los esquemas (DTOs) y autenticarte en:
-
-👉 **http://localhost:3001/docs**
+| Rol | Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin@test.com` | `admin123` |
+| **Médico** | `dr@test.com` | `dr123` |
+| **Paciente** | `patient@test.com` | `patient123` |
 
 ---
 
-## 💎 Features Implementadas (Checklist Cumplido)
-
-### Obligatorias:
-- [x] Autenticación robusta JWT + Refresh Tokens.
-- [x] Autorización mediante RBAC (Guards y Decoradores personalizados).
-- [x] **Médicos:** Generación de prescripciones con ítems de texto libre.
-- [x] **Pacientes:** Listado de sus recetas, cambiar estado a consumido y descargar PDF.
-- [x] **Admin:** Dashboard de métricas con filtros de tiempo y separación por roles.
-- [x] UI Premium: Responsive, animaciones, Toasts y Dark Mode (preferencia guardada).
-- [x] Setup, Migraciones y Semillas configuradas.
-
-### Plus Opcionales:
-- [x] **Swagger:** Documentación completa y endpoints tipados.
-- [x] **Firma Médica:** Los doctores pueden subir su firma en Base64, y el sistema la estampa automáticamente en los PDFs.
-- [x] **Código QR:** El PDF inyecta un código QR que enlaza a la ruta pública/privada de la prescripción generada.
-- [x] **Top Doctores:** Métricas avanzadas para el Administrador para ver los doctores más activos.
-- [x] **Gestión de Usuarios:** Interfaz de administración de usuarios para crear cuentas nuevas del sistema (Doctores, Pacientes).
-- [x] Búsqueda inteligente por nombre de usuario, rol o email en las listas de usuarios y prescripciones.
+## 📄 Entregables Adicionales
+*   **PDF con QR**: Las recetas generadas incluyen los datos del médico, paciente y un código único.
+*   **Dashboard de Admin**: Gráficos interactivos de prescripciones por día y por estado.
+*   **Manejo de Errores**: Filtros globales de excepciones para respuestas consistentes.

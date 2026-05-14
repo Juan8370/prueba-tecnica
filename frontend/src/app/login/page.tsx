@@ -23,10 +23,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken } = response.data;
-
-      await login(accessToken, refreshToken);
+      await api.post('/auth/login', { email, password });
+      await login();
       toast.success('¡Bienvenido de nuevo!');
       router.push('/dashboard');
     } catch (error: any) {
