@@ -122,15 +122,6 @@ export default function LoginPage() {
             )}
           </motion.button>
         </form>
-
-        <div className="mt-8 text-center border-t border-gray-100 dark:border-slate-800 pt-6">
-          <p className="text-sm text-gray-500 dark:text-slate-400">
-            ¿No tienes una cuenta?{' '}
-            <button className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors">
-              Regístrate
-            </button>
-          </p>
-        </div>
       </motion.div>
     </div>
   );

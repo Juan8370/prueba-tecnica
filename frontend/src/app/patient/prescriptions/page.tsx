@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -9,10 +10,13 @@ import {
   HiDownload, 
   HiFilter, 
   HiCalendar, 
-  HiUser, 
   HiChevronRight,
-  HiClock
+  HiClock,
+  HiLogout,
+  HiChevronLeft
 } from 'react-icons/hi';
+import { RiDashboardLine } from 'react-icons/ri';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { format } from 'date-fns';
@@ -42,7 +46,8 @@ interface Prescription {
 }
 
 export default function PatientPrescriptionsPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'consumed'>('all');
@@ -107,8 +112,46 @@ export default function PatientPrescriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-300">
+      {/* Header */}
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
+            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
+              <RiDashboardLine size={24} />
+            </div>
+            <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">MediAdmin</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <div className="text-right hidden sm:block">
+              <div className="flex items-center justify-end gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.name || user?.email}</p>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">{user?.role}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+            >
+              <HiLogout size={24} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-grow max-w-7xl mx-auto w-full p-4 md:p-8">
+        <div className="mb-6">
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold hover:underline transition-all"
+          >
+            <HiChevronLeft size={20} /> Volver al Dashboard
+          </button>
+        </div>
+
         <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
@@ -284,7 +327,7 @@ export default function PatientPrescriptionsPage() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
