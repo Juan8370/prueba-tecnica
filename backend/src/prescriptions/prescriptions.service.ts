@@ -1,16 +1,25 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
 import { PrescriptionQueryDto } from './dto/prescription-query.dto';
 import { Role, PrescriptionStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import * as PDFDocument from 'pdfkit';
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class PrescriptionsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createPrescriptionDto: CreatePrescriptionDto, doctorUserId: string) {
+  async create(
+    createPrescriptionDto: CreatePrescriptionDto,
+    doctorUserId: string,
+  ) {
     const doctor = await this.prisma.doctor.findUnique({
       where: { userId: doctorUserId },
     });
@@ -108,13 +117,17 @@ export class PrescriptionsService {
     // Role based filtering
     if (role === Role.doctor) {
       if (mine === 'true') {
-        const doctor = await this.prisma.doctor.findUnique({ where: { userId } });
+        const doctor = await this.prisma.doctor.findUnique({
+          where: { userId },
+        });
         where.authorId = doctor?.id;
       } else if (authorId) {
         where.authorId = authorId;
       }
     } else if (role === Role.patient) {
-      const patient = await this.prisma.patient.findUnique({ where: { userId } });
+      const patient = await this.prisma.patient.findUnique({
+        where: { userId },
+      });
       where.patientId = patient?.id;
     } else if (role === Role.admin) {
       if (patientId) where.patientId = patientId;
@@ -199,12 +212,18 @@ export class PrescriptionsService {
     if (role === Role.doctor) {
       const doctor = await this.prisma.doctor.findUnique({ where: { userId } });
       if (prescription.authorId !== doctor?.id) {
-        throw new ForbiddenException('You can only view your own prescriptions');
+        throw new ForbiddenException(
+          'You can only view your own prescriptions',
+        );
       }
     } else if (role === Role.patient) {
-      const patient = await this.prisma.patient.findUnique({ where: { userId } });
+      const patient = await this.prisma.patient.findUnique({
+        where: { userId },
+      });
       if (prescription.patientId !== patient?.id) {
-        throw new ForbiddenException('You can only view your own prescriptions');
+        throw new ForbiddenException(
+          'You can only view your own prescriptions',
+        );
       }
     }
 
@@ -226,7 +245,9 @@ export class PrescriptionsService {
     }
 
     if (prescription.patientId !== patient.id) {
-      throw new ForbiddenException('You can only consume your own prescriptions');
+      throw new ForbiddenException(
+        'You can only consume your own prescriptions',
+      );
     }
 
     if (prescription.status === PrescriptionStatus.consumed) {
@@ -245,8 +266,22 @@ export class PrescriptionsService {
   async generatePdf(id: string, userId: string, role: Role): Promise<Buffer> {
     const prescription = await this.findOne(id, userId, role);
 
+    // Generate QR Code data URL
+    const frontEndUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+    const qrUrl = `${frontEndUrl}/patient/prescriptions/${id}`;
+    let qrBuffer: Buffer | null = null;
+
+    try {
+      const qrDataUrl = await QRCode.toDataURL(qrUrl);
+      const base64Data = qrDataUrl.split(';base64,').pop();
+      if (base64Data) {
+        qrBuffer = Buffer.from(base64Data, 'base64');
+      }
+    } catch (e) {
+      console.error('Error generating QR code', e);
+    }
+
     return new Promise((resolve, reject) => {
-      // Use the default constructor correctly for pdfkit
       const PDF = require('pdfkit');
       const doc = new PDF({ margin: 50, size: 'A4' });
       const buffers: Buffer[] = [];
@@ -259,23 +294,39 @@ export class PrescriptionsService {
       doc.on('error', (err: Error) => reject(err));
 
       // Header
-      doc.fillColor('#4F46E5').fontSize(24).text('RECETA MÉDICA', { align: 'center' });
+      doc
+        .fillColor('#4F46E5')
+        .fontSize(24)
+        .text('RECETA MÉDICA', { align: 'center' });
       doc.moveDown(0.5);
-      doc.fillColor('#64748B').fontSize(10).text(`Código Único: ${prescription.code}`, { align: 'right' });
-      doc.text(`Fecha de Emisión: ${prescription.createdAt.toLocaleDateString('es-ES')}`, { align: 'right' });
+      doc
+        .fillColor('#64748B')
+        .fontSize(10)
+        .text(`Código Único: ${prescription.code}`, { align: 'right' });
+      doc.text(
+        `Fecha de Emisión: ${prescription.createdAt.toLocaleDateString('es-ES')}`,
+        { align: 'right' },
+      );
+
+      if (qrBuffer) {
+        doc.image(qrBuffer, 500, 30, { width: 60 });
+      }
+
       doc.moveDown(2);
 
       // Main Container
       const startY = doc.y;
-      
+
       // Doctor Column
       doc.fillColor('#1E293B').fontSize(14).text('MÉDICO TRATANTE', 50, startY);
       doc.moveDown(0.5);
       doc.fontSize(11).fillColor('#334155');
       doc.text(`Dr. ${prescription.author.user.name}`);
       doc.text(`${prescription.author.specialty || 'Medicina General'}`);
-      doc.text(`Cédula: ${prescription.author.medicalLicense || 'No registrada'}`);
-      
+      doc.text(
+        `Cédula: ${prescription.author.medicalLicense || 'No registrada'}`,
+      );
+
       // Patient Column
       doc.fillColor('#1E293B').fontSize(14).text('PACIENTE', 300, startY);
       doc.moveDown(0.5);
@@ -284,39 +335,65 @@ export class PrescriptionsService {
       doc.text(`${prescription.patient.user.email}`);
 
       doc.moveDown(3);
-      doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#E2E8F0').lineWidth(1).stroke();
+      doc
+        .moveTo(50, doc.y)
+        .lineTo(550, doc.y)
+        .strokeColor('#E2E8F0')
+        .lineWidth(1)
+        .stroke();
       doc.moveDown(1.5);
 
       // Prescription Items
-      doc.fillColor('#1E293B').fontSize(16).text('PRESCRIPCIÓN Y DOSIS', { underline: true });
+      doc
+        .fillColor('#1E293B')
+        .fontSize(16)
+        .text('PRESCRIPCIÓN Y DOSIS', { underline: true });
       doc.moveDown(1);
 
       prescription.items.forEach((item, index) => {
-        doc.fillColor('#1E293B').fontSize(12).text(`${index + 1}. ${item.name}`, { continued: true });
-        doc.fillColor('#6366F1').text(`  -  ${item.dosage} (Cant: ${item.quantity})`);
-        
+        doc
+          .fillColor('#1E293B')
+          .fontSize(12)
+          .text(`${index + 1}. ${item.name}`, { continued: true });
+        doc
+          .fillColor('#6366F1')
+          .text(`  -  ${item.dosage} (Cant: ${item.quantity})`);
+
         if (item.instructions) {
           doc.moveDown(0.2);
-          doc.fillColor('#64748B').fontSize(10).text(`Instrucciones: ${item.instructions}`, { indent: 20 });
+          doc
+            .fillColor('#64748B')
+            .fontSize(10)
+            .text(`Instrucciones: ${item.instructions}`, { indent: 20 });
         }
         doc.moveDown(1);
       });
 
       if (prescription.notes) {
         doc.moveDown(1);
-        doc.fillColor('#1E293B').fontSize(12).text('NOTAS ADICIONALES:', { underline: true });
+        doc
+          .fillColor('#1E293B')
+          .fontSize(12)
+          .text('NOTAS ADICIONALES:', { underline: true });
         doc.moveDown(0.5);
         doc.fillColor('#475569').fontSize(10).text(prescription.notes);
       }
 
       // Footer / Signature Area
       const footerY = 700;
-      doc.moveTo(150, footerY).lineTo(450, footerY).strokeColor('#94A3B8').lineWidth(0.5).stroke();
+      doc
+        .moveTo(150, footerY)
+        .lineTo(450, footerY)
+        .strokeColor('#94A3B8')
+        .lineWidth(0.5)
+        .stroke();
       doc.moveDown(0.5);
 
       if (prescription.author.signature) {
         try {
-          const base64Data = prescription.author.signature.split(';base64,').pop();
+          const base64Data = prescription.author.signature
+            .split(';base64,')
+            .pop();
           if (base64Data) {
             const signatureBuffer = Buffer.from(base64Data, 'base64');
             // Centrar la firma (200px de ancho) sobre la línea
@@ -327,8 +404,21 @@ export class PrescriptionsService {
         }
       }
 
-      doc.fillColor('#1E293B').fontSize(11).text(`Dr. ${prescription.author.user.name}`, 50, footerY + 10, { align: 'center' });
-      doc.fontSize(9).fillColor('#64748B').text(`Cédula Profesional: ${prescription.author.medicalLicense || 'N/A'}`, 50, footerY + 25, { align: 'center' });
+      doc
+        .fillColor('#1E293B')
+        .fontSize(11)
+        .text(`Dr. ${prescription.author.user.name}`, 50, footerY + 10, {
+          align: 'center',
+        });
+      doc
+        .fontSize(9)
+        .fillColor('#64748B')
+        .text(
+          `Cédula Profesional: ${prescription.author.medicalLicense || 'N/A'}`,
+          50,
+          footerY + 25,
+          { align: 'center' },
+        );
 
       doc.end();
     });

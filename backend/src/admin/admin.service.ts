@@ -14,27 +14,32 @@ export class AdminService {
       if (to) where.createdAt.lte = to;
     }
 
-    const [doctors, patients, prescriptions, statusGroups, dailyGroups] = await Promise.all([
-      this.prisma.doctor.count(),
-      this.prisma.patient.count(),
-      this.prisma.prescription.count({ where }),
-      this.prisma.prescription.groupBy({
-        by: ['status'],
-        _count: true,
-        where,
-      }),
-      this.prisma.prescription.findMany({
-        where,
-        select: {
-          createdAt: true,
-        },
-      }),
-    ]);
+    const [doctors, patients, prescriptions, statusGroups, dailyGroups] =
+      await Promise.all([
+        this.prisma.doctor.count(),
+        this.prisma.patient.count(),
+        this.prisma.prescription.count({ where }),
+        this.prisma.prescription.groupBy({
+          by: ['status'],
+          _count: true,
+          where,
+        }),
+        this.prisma.prescription.findMany({
+          where,
+          select: {
+            createdAt: true,
+          },
+        }),
+      ]);
 
     // Process byStatus
     const byStatus = {
-      pending: statusGroups.find((g) => g.status === PrescriptionStatus.pending)?._count || 0,
-      consumed: statusGroups.find((g) => g.status === PrescriptionStatus.consumed)?._count || 0,
+      pending:
+        statusGroups.find((g) => g.status === PrescriptionStatus.pending)
+          ?._count || 0,
+      consumed:
+        statusGroups.find((g) => g.status === PrescriptionStatus.consumed)
+          ?._count || 0,
     };
 
     // Process byDay (simplified)
