@@ -91,9 +91,9 @@ export default function DashboardPage() {
             <div className="text-right hidden sm:block">
               <div className="flex items-center justify-end gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Sesión Activa"></span>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.name || user.email}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.name || user?.email}</p>
               </div>
-              <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">{user.role}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">{user?.role}</p>
             </div>
             <button
               onClick={logout}
@@ -136,8 +136,8 @@ export default function DashboardPage() {
                   </div>
                   
                   <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{user.name || 'Usuario'}</h3>
-                    <p className="text-gray-500 dark:text-slate-400 text-sm">{user.email}</p>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{user?.name || 'Usuario'}</h3>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm">{user?.email}</p>
                   </div>
 
                   <div className="space-y-4">
@@ -146,13 +146,13 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">Rol de Usuario</span>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-full border border-indigo-200 dark:border-indigo-800 uppercase">
-                          <HiShieldCheck size={12} /> {user.role}
+                          <HiShieldCheck size={12} /> {user?.role}
                         </span>
                       </div>
                       
                       {/* Role Specific Details */}
                       <div className="space-y-3 mt-4">
-                        {user.role === 'doctor' && user.doctor && (
+                        {user?.role === 'doctor' && user?.doctor && (
                           <>
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-indigo-500 shadow-sm">
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                               </div>
                               <div>
                                 <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">Especialidad</p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.doctor.specialty || 'Medicina General'}</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.doctor.specialty || 'Medicina General'}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -169,13 +169,13 @@ export default function DashboardPage() {
                               </div>
                               <div>
                                 <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">Cédula Profesional</p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.doctor.medicalLicense || 'No registrada'}</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.doctor.medicalLicense || 'No registrada'}</p>
                               </div>
                             </div>
                           </>
                         )}
 
-                        {user.role === 'patient' && user.patient && (
+                        {user?.role === 'patient' && user?.patient && (
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-green-500 shadow-sm">
                               <HiPencilAlt size={16} />
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                             <div>
                               <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">Fecha de Nacimiento</p>
                               <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {user.patient.birthDate ? new Date(user.patient.birthDate).toLocaleDateString() : 'No registrada'}
+                                {user?.patient.birthDate ? new Date(user?.patient.birthDate).toLocaleDateString() : 'No registrada'}
                               </p>
                             </div>
                           </div>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between text-[10px] px-2 font-bold uppercase tracking-wider">
                       <div className="flex items-center gap-1 text-gray-400 dark:text-slate-500">
                         <HiIdentification />
-                        <span>ID: {user.id.substring(0, 12)}</span>
+                        <span>ID: {user?.id.substring(0, 12)}</span>
                       </div>
                       <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                         <HiCheckCircle />
@@ -203,7 +203,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Doctor Signature Action */}
-                    {user.role === 'doctor' && (
+                    {user?.role === 'doctor' && (
                       <div className="pt-4 mt-4 border-t border-gray-100 dark:border-slate-800">
                         <input 
                           type="file" 
@@ -237,7 +237,7 @@ export default function DashboardPage() {
             {/* Quick Actions / Role Specific Section */}
             <div className="lg:col-span-2 space-y-6">
               {/* Doctor Specific Actions */}
-              {user.role === 'doctor' && (
+              {user?.role === 'doctor' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
@@ -286,7 +286,7 @@ export default function DashboardPage() {
               )}
 
               {/* Patient Specific Actions */}
-              {user.role === 'patient' && (
+              {user?.role === 'patient' && (
                 <motion.div 
                   whileHover={{ scale: 1.02 }}
                   className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-green-100 dark:border-green-900/30 flex flex-col justify-between"
@@ -311,7 +311,7 @@ export default function DashboardPage() {
               )}
 
               {/* Admin Specific Actions */}
-              {user.role === 'admin' && (
+              {user?.role === 'admin' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <motion.div 
                     whileHover={{ scale: 1.02 }}

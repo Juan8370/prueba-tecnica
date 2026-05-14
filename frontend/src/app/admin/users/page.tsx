@@ -151,9 +151,9 @@ export default function AdminUsersPage() {
             <div className="text-right hidden sm:block">
               <div className="flex items-center justify-end gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Sesión Activa"></span>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.name || user.email}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.name || user?.email}</p>
               </div>
-              <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">{user.role}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">{user?.role}</p>
             </div>
             <button
               onClick={logout}

@@ -42,7 +42,7 @@ interface Prescription {
 }
 
 export default function PatientPrescriptionsPage() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'consumed'>('all');

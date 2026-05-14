@@ -350,7 +350,7 @@ export class PrescriptionsService {
         .text('PRESCRIPCIÓN Y DOSIS', { underline: true });
       doc.moveDown(1);
 
-      prescription.items.forEach((item, index) => {
+      prescription.items.forEach((item: any, index: number) => {
         doc
           .fillColor('#1E293B')
           .fontSize(12)

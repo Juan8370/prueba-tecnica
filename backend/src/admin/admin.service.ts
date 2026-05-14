@@ -35,16 +35,16 @@ export class AdminService {
     // Process byStatus
     const byStatus = {
       pending:
-        statusGroups.find((g) => g.status === PrescriptionStatus.pending)
+        statusGroups.find((g: any) => g.status === PrescriptionStatus.pending)
           ?._count || 0,
       consumed:
-        statusGroups.find((g) => g.status === PrescriptionStatus.consumed)
+        statusGroups.find((g: any) => g.status === PrescriptionStatus.consumed)
           ?._count || 0,
     };
 
     // Process byDay (simplified)
     const dailyMap = new Map<string, number>();
-    dailyGroups.forEach((p) => {
+    dailyGroups.forEach((p: any) => {
       const date = p.createdAt.toISOString().split('T')[0];
       dailyMap.set(date, (dailyMap.get(date) || 0) + 1);
     });
@@ -64,16 +64,16 @@ export class AdminService {
       take: 5,
     });
 
-    const doctorIds = topDoctorsRaw.map((d) => d.authorId);
+    const doctorIds = topDoctorsRaw.map((d: any) => d.authorId);
     
     const doctorsData = await this.prisma.doctor.findMany({
       where: { id: { in: doctorIds } },
       include: { user: { select: { name: true } } },
     });
 
-    const doctorMap = new Map(doctorsData.map(doc => [doc.id, doc.user.name]));
+    const doctorMap = new Map(doctorsData.map((doc: any) => [doc.id, doc.user.name]));
 
-    const topDoctors = topDoctorsRaw.map((d) => ({
+    const topDoctors = topDoctorsRaw.map((d: any) => ({
       doctorId: d.authorId,
       name: doctorMap.get(d.authorId) || 'Desconocido',
       count: d._count,

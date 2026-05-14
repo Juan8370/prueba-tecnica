@@ -11,7 +11,7 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Response, Request as ExpressRequest } from 'express';
+import type { Response, Request as ExpressRequest } from 'express';
 import {
   ApiTags,
   ApiOperation,
