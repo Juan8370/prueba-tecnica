@@ -15,10 +15,12 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = process.env.APP_ORIGIN
-        ? process.env.APP_ORIGIN.split(',')
+        ? process.env.APP_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
         : ['http://localhost:3000'];
       
-      if (!origin || allowedOrigins.includes(origin)) {
+      const sanitizedOrigin = origin ? origin.replace(/\/$/, '') : null;
+      
+      if (!sanitizedOrigin || allowedOrigins.includes(sanitizedOrigin)) {
         callback(null, true);
       } else {
         callback(null, false);
