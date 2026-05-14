@@ -82,6 +82,19 @@ export class PrescriptionsService {
 
     const where: any = {};
 
+    if (query.search) {
+      where.OR = [
+        { code: { contains: query.search, mode: 'insensitive' } },
+        {
+          patient: {
+            user: {
+              name: { contains: query.search, mode: 'insensitive' },
+            },
+          },
+        },
+      ];
+    }
+
     if (status) {
       where.status = status;
     }
@@ -300,7 +313,21 @@ export class PrescriptionsService {
       const footerY = 700;
       doc.moveTo(150, footerY).lineTo(450, footerY).strokeColor('#94A3B8').lineWidth(0.5).stroke();
       doc.moveDown(0.5);
-      doc.fillColor('#1E293B').fontSize(11).text(prescription.author.signature || `Dr. ${prescription.author.user.name}`, 50, footerY + 10, { align: 'center' });
+
+      if (prescription.author.signature) {
+        try {
+          const base64Data = prescription.author.signature.split(';base64,').pop();
+          if (base64Data) {
+            const signatureBuffer = Buffer.from(base64Data, 'base64');
+            // Centrar la firma (200px de ancho) sobre la línea
+            doc.image(signatureBuffer, 197.5, footerY - 70, { width: 200 });
+          }
+        } catch (e) {
+          console.error('Error rendering signature image in PDF', e);
+        }
+      }
+
+      doc.fillColor('#1E293B').fontSize(11).text(`Dr. ${prescription.author.user.name}`, 50, footerY + 10, { align: 'center' });
       doc.fontSize(9).fillColor('#64748B').text(`Cédula Profesional: ${prescription.author.medicalLicense || 'N/A'}`, 50, footerY + 25, { align: 'center' });
 
       doc.end();

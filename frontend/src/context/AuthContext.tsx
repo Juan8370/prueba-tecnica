@@ -8,8 +8,16 @@ import { useRouter } from 'next/navigation';
 interface User {
   id: string;
   email: string;
-  name?: string;
+  name: string;
   role: string;
+  doctor?: {
+    specialty?: string;
+    medicalLicense?: string;
+    signature?: string;
+  };
+  patient?: {
+    birthDate?: string;
+  };
 }
 
 interface AuthContextType {

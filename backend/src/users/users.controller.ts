@@ -1,16 +1,23 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.admin)
 export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
   @Get()
-  findAll() {
-    // TODO: Implement paginated user listing with role and query filters (Admin only)
-    return 'Endpoint GET /users OK';
+  findAll(@Query() query: { role?: string; search?: string; page?: number; limit?: number }) {
+    return this.usersService.findAll(query);
   }
 
   @Post()
-  create() {
-    // TODO: Implement user creation with roles (Admin only)
-    return 'Endpoint POST /users OK';
+  create(@Body() data: any) {
+    return this.usersService.createUser(data);
   }
 }

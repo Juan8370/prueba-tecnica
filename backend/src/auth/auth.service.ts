@@ -58,4 +58,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
+
+  async getProfile(userId: string) {
+    return this.usersService.getProfile(userId);
+  }
 }

@@ -1,22 +1,65 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
-import { HiUserCircle, HiLogout, HiIdentification, HiShieldCheck, HiPlus, HiOutlineClipboardList } from 'react-icons/hi';
+import { 
+  HiUserCircle, 
+  HiLogout, 
+  HiIdentification, 
+  HiShieldCheck, 
+  HiPlus, 
+  HiOutlineClipboardList,
+  HiPencilAlt,
+  HiCheckCircle,
+  HiChartBar,
+  HiUsers
+} from 'react-icons/hi';
 import { RiDashboardLine } from 'react-icons/ri';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecciona una imagen para tu firma');
+      return;
+    }
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      try {
+        // We'll use a generic update endpoint or a specific doctor one
+        await api.patch('/doctors/me/signature', { signature: base64String });
+        toast.success('Firma actualizada correctamente');
+      } catch (error) {
+        console.error('Error uploading signature', error);
+        toast.error('No se pudo actualizar la firma. Intenta más tarde.');
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   if (loading) {
     return (
@@ -46,7 +89,10 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.name || user.email}</p>
+              <div className="flex items-center justify-end gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Sesión Activa"></span>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.name || user.email}</p>
+              </div>
               <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">{user.role}</p>
             </div>
             <button
@@ -72,91 +118,245 @@ export default function DashboardPage() {
             <p className="text-gray-500 dark:text-slate-400">Aquí tienes un resumen de tu perfil y accesos.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* User Profile Card */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 flex flex-col items-center text-center"
-            >
-              <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-inner">
-                <HiUserCircle size={48} />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{user.name || 'Usuario'}</h3>
-              <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">{user.email}</p>
-              <div className="w-full pt-4 border-t border-gray-50 dark:border-slate-800 flex justify-between items-center px-2">
-                <div className="flex items-center gap-1 text-gray-400 dark:text-slate-500">
-                  <HiIdentification />
-                  <span className="text-xs">ID: {user.id.substring(0, 8)}...</span>
-                </div>
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold rounded-full border border-green-100 dark:border-green-900/30">
-                  <HiShieldCheck />
-                  {user.role.toUpperCase()}
-                </div>
-              </div>
-            </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Merged Profile & Role Card */}
+            <div className="lg:col-span-1">
+              <motion.div
+                whileHover={{ y: -5 }}
+                className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden"
+              >
+                <div className="h-24 bg-gradient-to-r from-indigo-600 to-indigo-700"></div>
+                <div className="px-6 pb-8">
+                  <div className="relative -mt-12 mb-4 flex justify-center">
+                    <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-2xl p-1.5 shadow-lg">
+                      <div className="w-full h-full bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <HiUserCircle size={56} />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{user.name || 'Usuario'}</h3>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm">{user.email}</p>
+                  </div>
 
-            {/* Quick Stats or Info */}
-            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 dark:from-indigo-700 dark:to-indigo-900 p-6 rounded-2xl text-white shadow-lg shadow-indigo-100 dark:shadow-none">
-                <h4 className="text-indigo-100 text-sm font-semibold uppercase tracking-wider mb-2">Rol Asignado</h4>
-                <p className="text-3xl font-bold mb-4">{user.role}</p>
-                <p className="text-indigo-100 text-sm opacity-80">
-                  Tienes permisos de {user.role === 'admin' ? 'administrador total' : user.role === 'doctor' ? 'gestión médica' : 'consulta de paciente'}.
-                </p>
-              </div>
+                  <div className="space-y-4">
+                    {/* Common Info */}
+                    <div className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">Rol de Usuario</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-full border border-indigo-200 dark:border-indigo-800 uppercase">
+                          <HiShieldCheck size={12} /> {user.role}
+                        </span>
+                      </div>
+                      
+                      {/* Role Specific Details */}
+                      <div className="space-y-3 mt-4">
+                        {user.role === 'doctor' && user.doctor && (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-indigo-500 shadow-sm">
+                                <HiOutlineClipboardList size={16} />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">Especialidad</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.doctor.specialty || 'Medicina General'}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-indigo-500 shadow-sm">
+                                <HiIdentification size={16} />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">Cédula Profesional</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.doctor.medicalLicense || 'No registrada'}</p>
+                              </div>
+                            </div>
+                          </>
+                        )}
 
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800">
-                <h4 className="text-gray-400 dark:text-slate-500 text-sm font-semibold uppercase tracking-wider mb-2">Estado de Sesión</h4>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">Activa</p>
+                        {user.role === 'patient' && user.patient && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-green-500 shadow-sm">
+                              <HiPencilAlt size={16} />
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">Fecha de Nacimiento</p>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {user.patient.birthDate ? new Date(user.patient.birthDate).toLocaleDateString() : 'No registrada'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] px-2 font-bold uppercase tracking-wider">
+                      <div className="flex items-center gap-1 text-gray-400 dark:text-slate-500">
+                        <HiIdentification />
+                        <span>ID: {user.id.substring(0, 12)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <HiCheckCircle />
+                        <span>Verificado</span>
+                      </div>
+                    </div>
+
+                    {/* Doctor Signature Action */}
+                    {user.role === 'doctor' && (
+                      <div className="pt-4 mt-4 border-t border-gray-100 dark:border-slate-800">
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleSignatureUpload} 
+                          className="hidden" 
+                          accept="image/*"
+                        />
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="w-full py-3 bg-white dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 text-gray-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 text-sm"
+                        >
+                          {isUploading ? (
+                            <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <HiPencilAlt size={18} />
+                          )}
+                          Subir Firma Médica
+                        </button>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center mt-2 px-4">
+                          La firma se incluirá automáticamente en tus prescripciones PDF.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="text-gray-500 dark:text-slate-400 text-sm">
-                  Tu sesión se mantiene persistente gracias a las cookies de seguridad.
-                </p>
-              </div>
+              </motion.div>
+            </div>
 
+            {/* Quick Actions / Role Specific Section */}
+            <div className="lg:col-span-2 space-y-6">
               {/* Doctor Specific Actions */}
               {user.role === 'doctor' && (
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 flex flex-col justify-between"
-                >
-                  <div>
-                    <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold uppercase tracking-wider mb-2">Acciones Médicas</h4>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Nueva Prescripción</p>
-                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
-                      Crea una nueva receta médica para tus pacientes de forma rápida.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => router.push('/doctor/prescriptions/new')}
-                    className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 dark:shadow-none"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 flex flex-col justify-between"
                   >
-                    <HiPlus size={20} /> Crear ahora
-                  </button>
-                </motion.div>
+                    <div>
+                      <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-6">
+                        <HiOutlineClipboardList size={24} />
+                      </div>
+                      <h4 className="text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest mb-2">Gestión Médica</h4>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Mis Prescripciones</p>
+                      <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                        Accede al historial completo de recetas emitidas y gestiona sus estados.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push('/doctor/prescriptions')}
+                      className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 dark:shadow-none"
+                    >
+                      Ver Historial completo
+                    </button>
+                  </motion.div>
+
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-400 mb-6">
+                        <HiPlus size={24} />
+                      </div>
+                      <h4 className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Acciones Rápidas</h4>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Nueva Prescripción</p>
+                      <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                        Crea una nueva receta médica digital de forma inmediata para tus pacientes.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push('/doctor/prescriptions/new')}
+                      className="w-full py-4 border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex items-center justify-center gap-2"
+                    >
+                      Generar Receta ahora
+                    </button>
+                  </motion.div>
+                </div>
               )}
+
               {/* Patient Specific Actions */}
               {user.role === 'patient' && (
                 <motion.div 
                   whileHover={{ scale: 1.02 }}
-                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-green-100 dark:border-green-900/30 flex flex-col justify-between"
+                  className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-green-100 dark:border-green-900/30 flex flex-col justify-between"
                 >
                   <div>
-                    <h4 className="text-green-600 dark:text-green-400 text-sm font-semibold uppercase tracking-wider mb-2">Mis Salud</h4>
+                    <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400 mb-6">
+                      <HiOutlineClipboardList size={24} />
+                    </div>
+                    <h4 className="text-green-600 dark:text-green-400 text-xs font-bold uppercase tracking-widest mb-2">Mi Salud Digital</h4>
                     <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Mis Prescripciones</p>
-                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
-                      Revisa tus recetas médicas, márcalas como consumidas o descarga el PDF.
+                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                      Revisa tus recetas médicas vigentes, descarga el PDF oficial o márcalas como ya adquiridas.
                     </p>
                   </div>
                   <button
                     onClick={() => router.push('/patient/prescriptions')}
-                    className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100 dark:shadow-none"
+                    className="w-full py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100 dark:shadow-none"
                   >
-                    <HiOutlineClipboardList size={20} /> Ver Bandeja
+                    Acceder a mis recetas
                   </button>
                 </motion.div>
+              )}
+
+              {/* Admin Specific Actions */}
+              {user.role === 'admin' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-6">
+                        <HiChartBar size={24} />
+                      </div>
+                      <h4 className="text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest mb-2">Análisis Global</h4>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Métricas del Sistema</p>
+                      <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                        Visualiza estadísticas de prescripciones, pacientes y actividad de médicos en tiempo real.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push('/admin')}
+                      className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 dark:shadow-none"
+                    >
+                      Ver Estadísticas
+                    </button>
+                  </motion.div>
+
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6">
+                        <HiUsers size={24} />
+                      </div>
+                      <h4 className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest mb-2">Control de Acceso</h4>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">Gestión de Usuarios</p>
+                      <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                        Administra el personal médico y pacientes. Crea nuevas cuentas y asigna roles.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push('/admin/users')}
+                      className="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 dark:shadow-none"
+                    >
+                      Gestionar Cuentas
+                    </button>
+                  </motion.div>
+                </div>
               )}
             </div>
           </div>

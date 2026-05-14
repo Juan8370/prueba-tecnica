@@ -47,4 +47,8 @@ export class PrescriptionQueryDto {
   @IsOptional()
   @IsString()
   mine?: string; // Boolean as string from query params
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
