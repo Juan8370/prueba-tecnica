@@ -10,23 +10,33 @@ const api = axios.create({
 
 // Interceptor de respuestas para manejar la rotación del token
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
+    console.log(`[API Error] ${originalRequest.method?.toUpperCase()} ${originalRequest.url} - ${error.response?.status}`);
 
     // Si el error es 401 y no hemos intentado reintentar todavía
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+      console.log('[API] Attempting token refresh...');
 
       try {
         // Pedir un nuevo access token usando el refresh token (que está en cookies HttpOnly)
         await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
+        console.log('[API] Refresh successful, retrying original request...');
         
         // Reintentar la petición original
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
+        console.log(`[API] Refresh failed: ${refreshError.response?.status}`);
         // Si el refresh token expiró o es inválido, forzar cierre de sesión
-        if (typeof window !== 'undefined') window.location.href = '/login';
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          console.log('[API] Redirecting to /login from', window.location.pathname);
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }
@@ -36,4 +46,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
