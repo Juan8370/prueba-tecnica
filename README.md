@@ -38,7 +38,7 @@ Durante el desarrollo se priorizó la seguridad y la eficiencia:
 
 ### 1. Clonar el proyecto
 ```bash
-git clone <url-del-repo>
+git clone https://github.com/Juan8370/prueba-tecnica
 cd prueba-tecnica
 ```
 
@@ -85,6 +85,7 @@ Para un despliegue exitoso, ten en cuenta:
 2.  **Frontend (Vercel)**:
     *   Configura `NEXT_PUBLIC_API_URL` con la URL de tu backend en Railway.
 
+---
 
 ### 4. Configuración del Frontend
 ```bash
